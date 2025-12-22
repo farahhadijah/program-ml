@@ -6,22 +6,25 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-# =====================
-# JUDUL
-# =====================
-st.title("Klasifikasi Berita Hoax Menggunakan Naive Bayes")
+st.title("Klasifikasi Berita Hoaks Menggunakan Naive Bayes")
 
 # =====================
-# LOAD DATASET
+# LOAD & GABUNG DATASET
 # =====================
-dataset = pd.read_csv(r"dataset/Cleaned_Antaranews_v1.csv")
-dataset.dropna(inplace=True)
+antara = pd.read_csv("dataset/Cleaned_Antaranews_v1.csv")
+detik = pd.read_csv("dataset/Cleaned_Detik_v2.csv")
+kompas = pd.read_csv("dataset/Cleaned_Kompas_v2.csv")
+turnback = pd.read_csv("dataset/Cleaned_TurnBackHoax_v3.csv")
 
-st.subheader("Preview Dataset")
+dataset = pd.concat([antara, detik, kompas, turnback], ignore_index=True)
+dataset.dropna(subset=["clean_text", "label"], inplace=True)
+
+st.subheader("Preview Dataset Gabungan")
+st.write("Total data:", dataset.shape[0])
 st.dataframe(dataset.head())
 
 # =====================
-# FITUR & LABEL (FIXED)
+# FITUR & LABEL
 # =====================
 X = dataset["clean_text"]
 y = dataset["label"]
@@ -29,14 +32,14 @@ y = dataset["label"]
 # =====================
 # TF-IDF
 # =====================
-vectorizer = TfidfVectorizer()
+vectorizer = TfidfVectorizer(max_features=5000)
 X_tfidf = vectorizer.fit_transform(X)
 
 # =====================
 # SPLIT DATA
 # =====================
 X_train, X_test, y_train, y_test = train_test_split(
-    X_tfidf, y, test_size=0.2, random_state=42
+    X_tfidf, y, test_size=0.2, random_state=42, stratify=y
 )
 
 # =====================
@@ -70,7 +73,7 @@ if st.button("Prediksi"):
         input_tfidf = vectorizer.transform([input_text])
         hasil = model.predict(input_tfidf)
 
-        if hasil[0] == "hoax":
-            st.error("🚨 BERITA HOAX")
+        if hasil[0] == 1:
+            st.error("🚨 BERITA HOAKS")
         else:
-            st.success("✅ BERITA NON-HOAX")
+            st.success("✅ BERITA NON-HOAKS")
